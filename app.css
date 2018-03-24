@@ -1,0 +1,9 @@
+h2 {
+  font-family: "Futura", "Century Gothic", "AppleGothic", sans-serif;
+}
+.top-buffer { margin-top:20px; }
+.input-square {
+  width: 50px;
+  height: 50px;
+  margin: 5px 5px 5px 5px;
+}

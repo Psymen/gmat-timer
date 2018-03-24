@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>GMAT TIMER (BETA)</title>
+        <meta name="description" content="GMATTIMER">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="normalize.css">
+        <link rel="stylesheet" href="app.css">
+        <link rel="stylesheet" href="node_modules/angular-hotkeys/build/hotkeys.min.css">
+        <!-- <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"> -->
+        <link rel="stylesheet" href="bootstrap.min.css">
+    </head>
+    <body ng-app="myApp">
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+
+
+        <div class="container" ng-controller="MainCtrl">
+
+            <div id="TestModal" class="modal fade" tabindex="-1" data-backdrop="static" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class='well'>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <h2><strong>Question: {{currentQuestion}}/{{numberOfQuestions}}</strong></h2>
+                                                <h2>{{currentTimeLeft.minutes}}:{{currentTimeLeft.seconds}}</h2>
+                                                <span>Interval Pace: {{timeString(currentTimeIntervalMin,currentTimeIntervalSec)}}</span>
+                                            </div>
+                                            <div ng-show="finished" class="col-sm-6">
+                                                <div class="row">
+                                                    <span style="font-size: 30px" class="label label-danger"><strong>Time is up!</strong></span>
+                                                </div>
+                                                <br>
+                                                <div class="row">
+                                                    <button class="btn btn-info">Go back and see results</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <form class="form-inline">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <button id="A" class="btn btn-default input-square" ng-class="{active: currentChoice === 'A'}" ng-click="selectChoice('A')">A</button>
+                                        <button id="B" class="btn btn-default input-square" ng-class="{active: currentChoice === 'B'}" ng-click="selectChoice('B')">B</button>
+                                        <button id="C" class="btn btn-default input-square" ng-class="{active: currentChoice === 'C'}" ng-click="selectChoice('C')">C</button>
+                                        <button id="D" class="btn btn-default input-square" ng-class="{active: currentChoice === 'D'}" ng-click="selectChoice('D')">D</button>
+                                        <button id="E" class="btn btn-default input-square" ng-class="{active: currentChoice === 'E'}" ng-click="selectChoice('E')">E</button>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" ng-model="record.question[currentQuestion-1].flag"> Flag Question
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-success" ng-click="confirmChoice()">Confirm (Enter)</button>
+                            <button class="btn btn-warning" ng-click="reset()">Reset (r)</button>
+                            <button class="btn btn-primary" ng-click="pause()">Pause (p)</button>
+                            <button class="btn btn-danger" data-dismiss="modal">End timer / Go Back (ESC)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header">
+                <h3 class="text-muted">GMAT TIMER</h3>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">Instructions</div>
+                <div class="panel-body">
+                    <p>This is a GMAT Timer to help you improve your pacing during the test. It's pretty simple but I hope you find it useful. <strong>Press '?' to view the keyboard shortcuts.</strong> Unfortunately, you won't have that during the test but for now it's a nice way to quickly enter your answers. </p>
+
+                    <ol>
+                        <li>Make sure your settings are correct. You can do custom practice sets by entering the time and number of questions below, or you can choose the <strong>Math/Verbal Default Settings</strong> which will simulate a full GMAT session. The time will be split evenly.</li>
+                        <li>Click on <strong>Start Timer</strong></li>
+                        <li>When the timer dialog comes up, select an answer by either clicking or using the keyboard shortcuts (A->'1', B->'2', etc)</li>
+                        <li>Once the time is done, or whenever you feel like it, exit the dialog to go to your results. You'll see your interval pace and your cumulative interval pace.</li>
+                    </ol>
+
+                    <p><a href="http://gmatclub.com/forum/simple-online-gmat-timer-180839.html">Feedback</a> definitely welcome!</p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <button class="btn btn-success" href="#" role="button" ng-click="startTimer()">Start Timer (s)</button>
+                    <button class="btn btn-default" ng-click="setMode('math')">Math Default Settings (m)</button>
+                    <button class="btn btn-default" ng-click="setMode('verbal')">Verbal Default Settings (v)</button>
+                    <button class="btn btn-default" ng-click="reset()">Reset (r)</button>
+                </div>
+            </div>
+            <div class="panel panel-default top-buffer">
+                <div class="panel-heading"> Settings </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label class="control-label col-sm-3"> Number of Questions: </label>
+                            <div class="col-sm-5">
+                                <input id="numOfQuestions" class="form-control form-inline" ng-model="numberOfQuestions">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-3"> Time Limit: </label>
+                            <div class="col-sm-5">
+                                <input id="timeLimit" class="form-control form-inline" ng-model="timeLimit">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel panel-info">
+                <div class="panel-heading">Results</div>
+                <div class="panel-body">
+                    <table class="table table-condensed table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Choice</th>
+                                <th>Time</th>
+                                <th>Interval Pace</th>
+                                <th>Cumulative Pace</th>
+                                <th>Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="question in record.question">
+                                <td>{{$index+1}}</td>
+                                <td>{{question.choice}}</td>
+                                <td>{{question.timeFinishedString}}</td>
+                                <td>{{question.intervalPace}}</td>
+                                <td>{{question.cumPace}}</td>
+                                <td>{{flagString(question.flag)}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> <!-- /container -->
+
+
+
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="jquery-1.10.2.min.js"><\/script>')</script>
+
+        <!-- <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script> -->
+        <script src="bootstrap.min.js"></script>
+        <script src="modernizr-2.6.2.min.js"></script>
+        <script src="angular.min.js"></script>
+        <script src="node_modules/angular-hotkeys/build/hotkeys.min.js"></script>
+        <script src="app.js"></script>
+        
+    </body>
+</html>
